@@ -5,8 +5,19 @@
 			"referenceName": "RestService1",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"endpoint": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@dataset().endpoint",
+				"type": "Expression"
+			}
+		},
 		"schema": []
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"
