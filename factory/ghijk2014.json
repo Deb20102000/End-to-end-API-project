@@ -1,0 +1,15 @@
+{
+	"name": "ghijk2014",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Enabled",
+			"editable": true
+		}
+	},
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "8a73a43f-7e7e-4ef3-ace5-82be7c9921b3",
+		"tenantId": "69ea2136-96a0-4897-a601-45fdfd232af1"
+	}
+}
