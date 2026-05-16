@@ -50,7 +50,14 @@
 						{
 							"name": "copy_to_landing_zone",
 							"type": "Copy",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "Script2_copy1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"timeout": "0.12:00:00",
 								"retry": 0,
@@ -139,9 +146,27 @@
 							"typeProperties": {
 								"scripts": [
 									{
-										"type": "Query"
+										"type": "NonQuery",
+										"text": "UPDATE audit_log\nSET\n    status = 'SUCCESS',\n    end_time = GETDATE()\nWHERE\n    entity_name = '@{item().entity_name}'\n    AND status = 'RUNNING'"
 									}
 								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "Script2_copy1",
+							"type": "Script",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"scripts": [],
 								"scriptBlockExecutionTimeout": "02:00:00"
 							}
 						}
