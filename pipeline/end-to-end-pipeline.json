@@ -52,7 +52,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "Script2_copy1",
+									"activity": "insert_audit_log",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -121,7 +121,7 @@
 							]
 						},
 						{
-							"name": "Script1",
+							"name": "running_audit_script",
 							"type": "Script",
 							"dependsOn": [
 								{
@@ -147,14 +147,17 @@
 								"scripts": [
 									{
 										"type": "NonQuery",
-										"text": "UPDATE audit_log\nSET\n    status = 'SUCCESS',\n    end_time = GETDATE()\nWHERE\n    entity_name = '@{item().entity_name}'\n    AND status = 'RUNNING'"
+										"text": {
+											"value": "UPDATE audit_log\nSET\n    status = 'SUCCESS',\n    load_end_time = GETDATE(),\n    execution_duration_sec =\n        DATEDIFF(\n            SECOND,\n            load_start_time,\n            GETDATE()\n        )\nWHERE\n    run_id = '@{pipeline().RunId}'\n    AND entity_name = '@{item().entity_name}'",
+											"type": "Expression"
+										}
 									}
 								],
 								"scriptBlockExecutionTimeout": "02:00:00"
 							}
 						},
 						{
-							"name": "Script2_copy1",
+							"name": "insert_audit_log",
 							"type": "Script",
 							"dependsOn": [],
 							"policy": {
@@ -165,10 +168,72 @@
 								"secureInput": false
 							},
 							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
 							"typeProperties": {
-								"scripts": [],
+								"scripts": [
+									{
+										"type": "NonQuery",
+										"text": "INSERT INTO audit_log\n(\n    pipeline_name,\n    run_id,\n    source_system,\n    entity_name,\n    layer_name,\n    load_type,\n    load_start_time,\n    status,\n    triggered_by,\n    created_date\n)\nVALUES\n(\n    'end-to-end-pipeline',\n    '@{pipeline().RunId}',\n    '@{item().source_system}',\n    '@{item().entity_name}',\n    'Landing',\n    '@{item().load_type}',\n    GETDATE(),\n    'RUNNING',\n    'ADF',\n    GETDATE()\n)"
+									}
+								],
 								"scriptBlockExecutionTimeout": "02:00:00"
 							}
+						},
+						{
+							"name": "update_watermark",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "running_audit_script",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "AzureSqlDatabase1",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "NonQuery",
+										"text": "UPDATE watermark_table\nSET\n    previous_watermark = last_watermark_value,\n    last_watermark_value = CONVERT(VARCHAR, GETDATE(), 120),\n    last_run_end_time = GETDATE(),\n    last_run_status = 'SUCCESS',\n    updated_date = GETDATE()\nWHERE\n    entity_name = '@{item().entity_name}'"
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "Notebook1",
+							"type": "DatabricksNotebook",
+							"dependsOn": [
+								{
+									"activity": "update_watermark",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": []
 						}
 					]
 				}
