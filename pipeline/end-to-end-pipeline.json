@@ -176,7 +176,10 @@
 								"scripts": [
 									{
 										"type": "NonQuery",
-										"text": "INSERT INTO audit_log\n(\n    pipeline_name,\n    run_id,\n    source_system,\n    entity_name,\n    layer_name,\n    load_type,\n    load_start_time,\n    status,\n    triggered_by,\n    created_date\n)\nVALUES\n(\n    'end-to-end-pipeline',\n    '@{pipeline().RunId}',\n    '@{item().source_system}',\n    '@{item().entity_name}',\n    'Landing',\n    '@{item().load_type}',\n    GETDATE(),\n    'RUNNING',\n    'ADF',\n    GETDATE()\n)"
+										"text": {
+											"value": "INSERT INTO audit_log\n(\n    pipeline_name,\n    run_id,\n    source_system,\n    entity_name,\n    layer_name,\n    load_type,\n    load_start_time,\n    status,\n    triggered_by,\n    created_date\n)\nVALUES\n(\n    'end-to-end-pipeline',\n    '@{pipeline().RunId}',\n    '@{item().source_system}',\n    '@{item().entity_name}',\n    'Landing',\n    '@{item().load_type}',\n    GETDATE(),\n    'RUNNING',\n    'ADF',\n    GETDATE()\n)",
+											"type": "Expression"
+										}
 									}
 								],
 								"scriptBlockExecutionTimeout": "02:00:00"
@@ -209,31 +212,14 @@
 								"scripts": [
 									{
 										"type": "NonQuery",
-										"text": "UPDATE watermark_table\nSET\n    previous_watermark = last_watermark_value,\n    last_watermark_value = CONVERT(VARCHAR, GETDATE(), 120),\n    last_run_end_time = GETDATE(),\n    last_run_status = 'SUCCESS',\n    updated_date = GETDATE()\nWHERE\n    entity_name = '@{item().entity_name}'"
+										"text": {
+											"value": "UPDATE watermark_table\nSET\n    previous_watermark = last_watermark_value,\n    last_watermark_value = CONVERT(VARCHAR, GETDATE(), 120),\n    last_run_end_time = GETDATE(),\n    last_run_status = 'SUCCESS',\n    updated_date = GETDATE()\nWHERE\n    entity_name = '@{item().entity_name}'",
+											"type": "Expression"
+										}
 									}
 								],
 								"scriptBlockExecutionTimeout": "02:00:00"
 							}
-						},
-						{
-							"name": "Notebook1",
-							"type": "DatabricksNotebook",
-							"dependsOn": [
-								{
-									"activity": "update_watermark",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": []
 						}
 					]
 				}
